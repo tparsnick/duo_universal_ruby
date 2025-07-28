@@ -35,6 +35,16 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
 
+  # Runtime dependencies
+  spec.add_runtime_dependency 'jwt'
+  spec.add_runtime_dependency 'net-http'
+  spec.add_runtime_dependency 'openssl'
+
+  # Development dependencies (used for testing, linting, etc.)
+  # spec.add_development_dependency "bundler", "~> 2.0"
+  # spec.add_development_dependency "rake", "~> 13.0"
+  # spec.add_development_dependency "rspec", "~> 3.0"
+
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end
