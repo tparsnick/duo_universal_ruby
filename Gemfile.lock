@@ -1,0 +1,55 @@
+PATH
+  remote: .
+  specs:
+    duo_universal_ruby (0.1.0)
+      jwt
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
+    base64 (0.3.0)
+    bigdecimal (3.2.2)
+    crack (1.0.0)
+      bigdecimal
+      rexml
+    diff-lcs (1.6.2)
+    hashdiff (1.2.0)
+    jwt (3.1.2)
+      base64
+    public_suffix (6.0.2)
+    rake (13.3.0)
+    rexml (3.4.1)
+    rspec (3.13.1)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.5)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.4)
+    timecop (0.9.10)
+    webmock (3.25.1)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
+
+PLATFORMS
+  arm64-darwin-22
+
+DEPENDENCIES
+  duo_universal_ruby!
+  jwt
+  rake (~> 13.0)
+  rspec
+  timecop
+  webmock
+
+BUNDLED WITH
+   2.4.19

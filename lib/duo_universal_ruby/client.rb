@@ -1,47 +1,27 @@
-require 'uri'
-require 'net/http'
-require 'json'
-require 'jwt'
-require 'securerandom'
-require 'openssl'
+require 'net/http'      # for Net::HTTP, Net::HTTP::Post, URI HTTP requests
+require 'uri'           # for URI and URI.parse
+require 'json'          # for JSON.parse
+require 'jwt'           # for JWT.encode / JWT.decode (gem)
+require 'securerandom'  # for SecureRandom in generate_rand_alphanumeric
+require 'openssl'       # for OpenSSL::SSL constants and verify modes
 
-module DuoUniversal
-  CLIENT_ID_LENGTH = 20
-  CLIENT_SECRET_LENGTH = 40
-  JTI_LENGTH = 36
-  MINIMUM_STATE_LENGTH = 16
-  MAXIMUM_STATE_LENGTH = 1024
-  STATE_LENGTH = 36
-  SUCCESS_STATUS_CODE = 200
-  FIVE_MINUTES_IN_SECONDS = 300
-  LEEWAY = 60
-
-  ERR_USERNAME = 'The username is invalid.'
-  ERR_NONCE = 'The nonce is invalid.'
-  ERR_CLIENT_ID = 'The Duo client id is invalid.'
-  ERR_CLIENT_SECRET = 'The Duo client secret is invalid.'
-  ERR_API_HOST = 'The Duo api host is invalid'
-  ERR_REDIRECT_URI = 'No redirect uri'
-  ERR_CODE = 'Missing authorization code'
-  ERR_GENERATE_LEN = 'Length needs to be at least 16'
-  ERR_STATE_LEN = "State must be at least #{MINIMUM_STATE_LENGTH} characters long and no longer than #{MAXIMUM_STATE_LENGTH} characters"
-  ERR_NONCE_LEN = "Nonce must be at least #{MINIMUM_STATE_LENGTH} characters long and no longer than #{MAXIMUM_STATE_LENGTH} characters"
-  ERR_EXP_SECONDS_TOO_LONG = 'Client may not be configured for a JWT expiry longer than five minutes.'
-  ERR_EXP_SECONDS_TOO_SHORT = 'Invalid JWT expiry duration.'
-
-  API_HOST_URI_FORMAT = 'https://%s'
-  OAUTH_V1_HEALTH_CHECK_ENDPOINT = 'https://%s/oauth/v1/health_check'
-  OAUTH_V1_AUTHORIZE_ENDPOINT = 'https://%s/oauth/v1/authorize'
-  OAUTH_V1_TOKEN_ENDPOINT = 'https://%s/oauth/v1/token'
-  DEFAULT_CA_CERT_PATH = File.join(__dir__, 'ca_certs.pem')
-
-  CLIENT_ASSERT_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
-
-  class Error < StandardError; end
-
+module DuoUniversalRuby
   class Client
-    def initialize(client_id, client_secret, api_host, redirect_uri, duo_certs: DEFAULT_CA_CERT_PATH,
+    def initialize(client_id:, client_secret:, api_host:, redirect_uri:, duo_certs: DEFAULT_CA_CERT_PATH,
                    use_duo_code_attribute: true, http_proxy: nil, exp_seconds: FIVE_MINUTES_IN_SECONDS)
+      # Initializes instance of Client class
+
+      # Arguments:
+
+      # client_id                -- Client ID for the application in Duo
+      # client_secret            -- Client secret for the application in Duo
+      # host                     -- Duo api host
+      # redirect_uri             -- Uri to redirect to after a successful auth
+      # duo_certs                -- (Optional: default is ca_certs.pem) Provide custom CA certs
+      # use_duo_code_attribute   -- (Optional: default true) Flag to use `duo_code` instead of `code` for returned authorization parameter
+      # http_proxy               -- (Optional) HTTP proxy to tunnel requests through
+      # exp_seconds              -- (Optional) The number of seconds used for JWT expiry. Must be be at most 5 minutes.
+
       validate_init_config(client_id, client_secret, api_host, redirect_uri, exp_seconds)
 
       @client_id = client_id
@@ -59,10 +39,22 @@ module DuoUniversal
     end
 
     def generate_state
+      # Random value passed initially in the OAUTH_V1_AUTHORIZE_ENDPOINT and verfied throughout interactions.
+      # It is up to the client to verify that it is the same value as a security measure.
+      # This value specifically protects against CSRF attacks (see RFC 6749)
       generate_rand_alphanumeric(STATE_LENGTH)
     end
 
     def health_check
+      # Checks whether Duo is available.
+
+      # Returns:
+      # {'response': {'timestamp': <int:unix timestamp>}, 'stat': 'OK'}
+
+      # Raises:
+      # DuoException on error for invalid credentials
+      # or problem connecting to Duo
+
       endpoint = format(OAUTH_V1_HEALTH_CHECK_ENDPOINT, @api_host)
       payload = create_jwt_payload(endpoint)
       body = {
@@ -78,7 +70,19 @@ module DuoUniversal
       raise Error, e.message
     end
 
-    def create_auth_url(username, state, nonce = nil)
+    def create_auth_url(username:, state:, nonce: nil)
+      # Generate uri to Duo's prompt
+
+      # Arguments:
+      # username        -- username trying to authenticate with Duo
+      # state           -- Randomly generated character string of at least 16
+      #                    and at most 1024 characters returned to the integration by Duo after 2FA
+      # nonce           -- (Optional) Randomly generated character string of at least 16
+      #                    and at most 1024 characters used as the nonce for the underlying OIDC flow
+
+      # Returns:
+      # Authorization uri to redirect to for the Duo prompt
+
       raise Error, ERR_STATE_LEN unless state && state.length.between?(MINIMUM_STATE_LENGTH, MAXIMUM_STATE_LENGTH)
       raise Error, ERR_USERNAME unless username
       raise Error, ERR_NONCE_LEN if nonce && !nonce.length.between?(MINIMUM_STATE_LENGTH, MAXIMUM_STATE_LENGTH)
@@ -110,7 +114,24 @@ module DuoUniversal
       uri.to_s
     end
 
-    def exchange_authorization_code_for_2fa_result(duo_code, username, nonce = nil)
+    def exchange_authorization_code_for_2fa_result(duo_code:, username:, nonce: nil)
+      # Exchange the duo_code for a token with Duo to determine
+      # if the auth was successful.
+
+      # Arguments:
+      # duoCode         -- Authentication session transaction id
+      #                    returned by Duo
+      # username        -- Name of the user authenticating with Duo
+      # nonce           -- (Optional) Random 36B string used to associate
+      #                    a session with an ID token
+
+      # Return:
+      # A token with meta-data about the auth
+
+      # Raises:
+      # DuoException on error for invalid duo_codes, invalid credentials,
+      # or problems connecting to Duo
+     
       raise Error, ERR_CODE unless duo_code
 
       endpoint = format(OAUTH_V1_TOKEN_ENDPOINT, @api_host)
@@ -147,6 +168,8 @@ module DuoUniversal
         }
       )
 
+      # ID Token validation
+      # https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation
       raise Error, ERR_USERNAME unless decoded['preferred_username'] == username
       raise Error, ERR_NONCE if nonce && decoded['nonce'] != nonce
 
