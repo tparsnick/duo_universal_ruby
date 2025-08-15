@@ -19,6 +19,12 @@ If bundler is not being used to manage dependencies, install the gem by executin
 ## Usage
 
 ```ruby
+# Replace fake DUO constant values with real values obtained from DUO
+DUO_CLIENT_ID = "X" * 20
+DUO_CLIENT_SECRET = "x" * 40
+DUO_HOST = "api-xxxxxxxx.duosecurity.com"
+DUO_REDIRECT_URI =  "https://localhost/duo-callback"
+
 client = DuoUniversalRuby::Client.new(
             client_id: DUO_CLIENT_ID,
             client_secret: DUO_CLIENT_SECRET,
@@ -46,8 +52,11 @@ client.health_check
 
 state = client.generate_state
     # Random value that is checked after interactions to protect against CSRF attacks
-   
-client.create_auth_url(username, state)
+
+username = "test@example.com"
+    # user authenticating with Duo
+
+client.create_auth_url(username: username, state: state)
     # Generate uri to Duo's prompt
     # GET /oauth/v1/authorize
 
@@ -59,25 +68,24 @@ client.create_auth_url(username, state)
     # Returns:
     # Authorization uri to redirect to for the Duo prompt
 
-    # After a successful Duo login, Duo redirect the user to the redirect_uri, e.g. /duo_callback with a duoCode and state
+    # After a successful Duo authentication, Duo redirects the user to the redirect_uri, e.g. /duo_callback with the params: duo_code and state
+    
+decoded_token = client.exchange_authorization_code_for_2fa_result(duo_code: duo_code, username: username)
+    # Exchange the duo_code for a token with Duo to determine
+    # if the auth was successful.
 
-decoded_token = client.exchange_authorization_code_for_2fa_result(duoCode, username)
-      # Exchange the duo_code for a token with Duo to determine
-      # if the auth was successful.
+    # POST /oauth/v1/token
 
-      # POST /oauth/v1/token
+    # Arguments:
+    # duo_code        -- Authentication session transaction id returned by Duo
+    # username        -- Name of the user authenticating with Duo
 
-      # Arguments:
-      # duoCode         -- Authentication session transaction id
-      #                    returned by Duo
-      # username        -- Name of the user authenticating with Duo
+    # Return:
+    # A token with meta-data about the auth
 
-      # Return:
-      # A token with meta-data about the auth
-
-      # Raises:
-      # DuoException on error for invalid duo_codes, invalid credentials,
-      # or problems connecting to Duo
+    # Raises:
+    # DuoException on error for invalid duo_codes, invalid credentials,
+    # or problems connecting to Duo
 
 ```
 

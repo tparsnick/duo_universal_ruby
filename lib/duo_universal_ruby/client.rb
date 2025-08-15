@@ -119,7 +119,7 @@ module DuoUniversalRuby
       # if the auth was successful.
 
       # Arguments:
-      # duoCode         -- Authentication session transaction id
+      # duo_code         -- Authentication session transaction id
       #                    returned by Duo
       # username        -- Name of the user authenticating with Duo
       # nonce           -- (Optional) Random 36B string used to associate
