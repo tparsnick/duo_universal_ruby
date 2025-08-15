@@ -1,6 +1,6 @@
 # DuoUniversalRuby
 
-## A Ruby implementation of the Duo WebSDKv4 with Universal Prompt
+## A Ruby implementation of the 2FA API to Duo WebSDKv4 apps using the Universal Prompt
 - https://duo.com/docs/duoweb
 - https://duo.com/docs/oauthapi
 
