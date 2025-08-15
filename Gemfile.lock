@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     duo_universal_ruby (0.1.0)
-      jwt
+      jwt (>= 2.2.2)
 
 GEM
   remote: https://rubygems.org/
@@ -45,7 +45,6 @@ PLATFORMS
 
 DEPENDENCIES
   duo_universal_ruby!
-  jwt
   rake (~> 13.0)
   rspec
   timecop
