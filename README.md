@@ -19,7 +19,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
 ## Usage
 
 ```ruby
-client = DuoUniversalRails::Client.new(
+client = DuoUniversalRuby::Client.new(
             client_id: DUO_CLIENT_ID,
             client_secret: DUO_CLIENT_SECRET,
             api_host: DUO_HOST,
