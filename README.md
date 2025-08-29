@@ -38,8 +38,10 @@ client = DuoUniversalRuby::Client.new(
     # client_secret            -- Client secret for the application in Duo
     # api_host                 -- Duo api host
     # redirect_uri             -- Uri for DUO to redirect to after a successful 2FA
-    # duo_certs                -- By default this is the path to the duo certs defined by DuoUniversalRuby::DEFAULT_CA_CERT_PATH.
-    #                             These are verified by OpenSSL::SSL::VERIFY_PEER. To disable peer verification, use 'DISABLE'.
+    # duo_certs                -- By default this is the path to the duo certs defined by
+    #                             DuoUniversalRuby::DEFAULT_CA_CERT_PATH and verified by
+    #                             OpenSSL::SSL::VERIFY_PEER.
+    #                             To disable peer verification, use 'DISABLE'.
 client.health_check
     # Checks whether Duo is available.
     # POST /oauth/v1/health_check
